@@ -55,6 +55,7 @@ add_env_var () {
 }
 
 # Expose host details
+SELF_ID=$(fetch_value_from_metadata_service "instance-id")
 SELF_IP=$(fetch_value_from_metadata_service "local-ipv4")
 SELF_HOSTNAME=$(fetch_value_from_metadata_service "local-hostname")
 
