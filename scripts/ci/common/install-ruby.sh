@@ -6,7 +6,7 @@ set -o pipefail
 
 apk --update add \
     ca-certificates \
-    ruby=2.5.1 \
+    ruby \
     ruby-bundler \
     ruby-json
 
