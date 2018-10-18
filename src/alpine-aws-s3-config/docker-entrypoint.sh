@@ -13,25 +13,30 @@ ensure_env_var_set () {
 }
 
 fetch_value_from_metadata_service () {
+    echo >&2 "Looking up instance metadata. [key: $1]"
     curl -s "http://169.254.169.254/latest/meta-data/$1"
 }
 
-run_callback () {
+source_callback () {
     local name="$1"
     if [ -n "${!name}" ]; then
-        ${!name}
+        echo >&2 "Sourcing callback. [path: ${!name}]"
+        source ${!name}
     fi
 }
 
 exec_callback () {
     local name="$1"
-    exec ${!name}
+    shift
+    echo >&2 "Exec'ing callback. [path: ${!name}]"
+    exec ${!name} "$@"
 }
 
 build_env_file_from_s3 () {
     local region="$1"
     local object_path="$2"
 
+    echo >&2 "Fetching and transforming env file from S3. [region: ${region}, object-path: ${object_path}]"
     aws s3 cp \
         --sse AES256 \
         --region ${region} \
@@ -43,6 +48,7 @@ fetch_file_from_s3 () {
     local object_path="$2"
     local local_path="$3"
 
+    echo >&2 "Fetching file from S3. [region: ${region}, object-path: ${object_path}, local-path: ${local_path}]"
     mkdir -p $(dirname "$local_path")
     aws s3 cp --sse AES256 --region ${region} ${object_path} ${local_path}
 }
@@ -51,6 +57,7 @@ add_env_var () {
     local name="$1"
     local value="$2"
 
+    echo >&2 "Adding environment variable. [name: ${name}]"
     export ${name}=${value}
 }
 
@@ -70,13 +77,13 @@ eval \
 
 # Fetch secrets files
 export -f fetch_file_from_s3
-run_callback "FETCH_SECRETS_FILES_SCRIPT_PATH"
+source_callback "FETCH_SECRETS_FILES_SCRIPT_PATH"
 unset -f fetch_file_from_s3
 
 # Export additional environment
 export -f add_env_var
-run_callback "EXPORT_ADDITIONAL_ENVIRONMENT_SCRIPT_PATH"
+source_callback "EXPORT_ADDITIONAL_ENVIRONMENT_SCRIPT_PATH"
 unset -f add_env_var
 
 # Delegate to startup script
-exec_callback "STARTUP_SCRIPT_PATH"
+exec_callback "STARTUP_SCRIPT_PATH" "$@"
