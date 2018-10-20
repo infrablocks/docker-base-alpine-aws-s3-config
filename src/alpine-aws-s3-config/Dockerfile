@@ -1,10 +1,10 @@
 FROM infrablocks/alpine-aws:0.3.0
 
-RUN apk -v --update add \
+RUN apk -v --no-cache add \
       bash \
-      sed \
-      && \
-    rm /var/cache/apk/*
+      curl \
+      dumb-init \
+      sed
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
