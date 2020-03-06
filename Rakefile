@@ -17,8 +17,9 @@ def latest_tag
 end
 
 namespace :image do
-  RakeDocker.define_image_tasks do |t|
-    t.image_name = 'alpine-aws-s3-config'
+  RakeDocker.define_image_tasks(
+      image_name: 'alpine-aws-s3-config'
+  ) do |t|
     t.work_directory = 'build/images'
 
     t.copy_spec = [
@@ -33,14 +34,6 @@ namespace :image do
         "config/secrets/dockerhub/credentials.yaml")
 
     t.tags = [latest_tag.to_s, 'latest']
-  end
-
-  desc 'Build and push image'
-  task :publish do
-    Rake::Task['image:clean'].invoke
-    Rake::Task['image:build'].invoke
-    Rake::Task['image:tag'].invoke
-    Rake::Task['image:push'].invoke
   end
 end
 
