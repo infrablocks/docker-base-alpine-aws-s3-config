@@ -67,12 +67,12 @@ SELF_IP=$(fetch_value_from_metadata_service "local-ipv4")
 SELF_HOSTNAME=$(fetch_value_from_metadata_service "local-hostname")
 
 # Fetch and source env file from S3
+ensure_env_var_set "S3_BUCKET_REGION"
 ensure_env_var_set "ENV_FILE_S3_OBJECT_PATH"
-ensure_env_var_set "ENV_FILE_S3_BUCKET_REGION"
 
 eval \
     $(build_env_file_from_s3 \
-        "${ENV_FILE_S3_BUCKET_REGION}" \
+        "${S3_BUCKET_REGION}" \
         "${ENV_FILE_S3_OBJECT_PATH}")
 
 # Fetch secrets files
