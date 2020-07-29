@@ -3,7 +3,7 @@
 set -e
 set -o pipefail
 
-# Define helper functions used in script and callbacks
+# Define helper functions using in script
 ensure_env_var_set () {
     local name="$1"
     if [ -z "${!name}" ]; then
@@ -12,16 +12,11 @@ ensure_env_var_set () {
     fi
 }
 
-fetch_value_from_metadata_service () {
-    echo >&2 "Looking up instance metadata. [key: $1]"
-    curl -s "http://169.254.169.254/latest/meta-data/$1"
-}
-
 source_callback () {
     local name="$1"
     if [ -n "${!name}" ]; then
         echo >&2 "Sourcing callback. [path: ${!name}]"
-        source ${!name}
+        source "${!name}"
     fi
 }
 
@@ -29,28 +24,71 @@ exec_callback () {
     local name="$1"
     shift
     echo >&2 "Exec'ing callback. [path: ${!name}]"
-    exec ${!name} "$@"
+    exec "${!name}" "$@"
+}
+
+# Ensure required env vars set and default optional env vars
+#
+# Note: S3_BUCKET_REGION and ENV_FILE_S3_OBJECT_PATH are deprecated but still
+# in use by some derived images, hence the defaulting in use here.
+AWS_S3_BUCKET_REGION="${AWS_S3_BUCKET_REGION:-${S3_BUCKET_REGION}}"
+AWS_S3_ENV_FILE_OBJECT_PATH=\
+"${AWS_S3_ENV_FILE_OBJECT_PATH:-${ENV_FILE_S3_OBJECT_PATH}}"
+
+ensure_env_var_set "AWS_S3_BUCKET_REGION"
+ensure_env_var_set "AWS_S3_ENV_FILE_OBJECT_PATH"
+
+AWS_DEFAULT_S3_ENDPOINT_URL="https://s3.${AWS_S3_BUCKET_REGION}.amazonaws.com"
+AWS_DEFAULT_METADATA_SERVICE_URL="http://169.254.169.254"
+
+AWS_S3_ENDPOINT_URL="${AWS_S3_ENDPOINT_URL:-${AWS_DEFAULT_S3_ENDPOINT_URL}}"
+AWS_METADATA_SERVICE_URL=\
+"${AWS_METADATA_SERVICE_URL:-${AWS_DEFAULT_METADATA_SERVICE_URL}}"
+
+# Define more helper functions using in script
+fetch_value_from_metadata_service () {
+    local key="$1"
+    echo >&2 "Looking up instance metadata. [key: $key]"
+    curl -s "${AWS_METADATA_SERVICE_URL}/latest/meta-data/$key"
 }
 
 build_env_file_from_s3 () {
     local region="$1"
     local object_path="$2"
 
-    echo >&2 "Fetching and transforming env file from S3. [region: ${region}, object-path: ${object_path}]"
-    aws s3 cp \
+    local region_kv="region: ${region}"
+    local object_path_kv="object-path: ${object_path}"
+    local details="[${region_kv}, ${object_path_kv}]"
+
+    echo >&2 "Fetching and transforming env file from S3. ${details}"
+    aws \
+        --endpoint-url "${AWS_S3_ENDPOINT_URL}" \
+        s3 cp \
         --sse AES256 \
-        --region ${region} \
-        ${object_path} - | sed 's/^/export /'
+        --region "${region}" \
+        "${object_path}" - | sed 's/^/export /'
 }
 
+# Define helper functions used in callbacks
 fetch_file_from_s3 () {
     local region="$1"
     local object_path="$2"
     local local_path="$3"
 
-    echo >&2 "Fetching file from S3. [region: ${region}, object-path: ${object_path}, local-path: ${local_path}]"
-    mkdir -p $(dirname "$local_path")
-    aws s3 cp --sse AES256 --region ${region} ${object_path} ${local_path}
+    local region_kv="region: ${region}"
+    local object_path_kv="object-path: ${object_path}"
+    local local_path_kv="local-path: ${local_path}"
+    local details="[${region_kv}, ${object_path_kv}, ${local_path_kv}]"
+
+    echo >&2 "Fetching file from S3. ${details}"
+    mkdir -p "$(dirname "$local_path")"
+    aws \
+        --endpoint-url "${AWS_S3_ENDPOINT_URL}" \
+        s3 cp \
+        --sse AES256 \
+        --region "${region}" \
+        "${object_path}" \
+        "${local_path}"
 }
 
 add_env_var () {
@@ -58,7 +96,7 @@ add_env_var () {
     local value="$2"
 
     echo >&2 "Adding environment variable. [name: ${name}]"
-    export ${name}=${value}
+    export "${name}"="${value}"
 }
 
 # Expose host details
@@ -66,14 +104,15 @@ SELF_ID=$(fetch_value_from_metadata_service "instance-id")
 SELF_IP=$(fetch_value_from_metadata_service "local-ipv4")
 SELF_HOSTNAME=$(fetch_value_from_metadata_service "local-hostname")
 
-# Fetch and source env file from S3
-ensure_env_var_set "S3_BUCKET_REGION"
-ensure_env_var_set "ENV_FILE_S3_OBJECT_PATH"
+export SELF_ID
+export SELF_IP
+export SELF_HOSTNAME
 
+# Fetch and source env file from S3
 eval \
-    $(build_env_file_from_s3 \
-        "${S3_BUCKET_REGION}" \
-        "${ENV_FILE_S3_OBJECT_PATH}")
+    "$(build_env_file_from_s3 \
+        "${AWS_S3_BUCKET_REGION}" \
+        "${AWS_S3_ENV_FILE_OBJECT_PATH}")"
 
 # Fetch secrets files
 export -f fetch_file_from_s3
