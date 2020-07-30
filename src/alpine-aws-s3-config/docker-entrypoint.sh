@@ -8,7 +8,7 @@ ensure_env_var_set () {
     local name="$1"
     if [ -z "${!name}" ]; then
         echo >&2 "Error: missing ${name} environment variable."
-        exit 1
+        return 1
     fi
 }
 
