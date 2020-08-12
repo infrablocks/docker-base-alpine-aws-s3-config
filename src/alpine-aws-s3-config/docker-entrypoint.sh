@@ -65,7 +65,7 @@ build_env_file_from_s3 () {
     local endpoint_url_kv="endpoint-url: ${endpoint_url}"
     local region_kv="region: ${region}"
     local object_path_kv="object-path: ${object_path}"
-    local details="[${endpoint_url_kv}, ${region_kv}, ${object_path_kv}}]"
+    local details="[${endpoint_url_kv}, ${region_kv}, ${object_path_kv}]"
 
     echo >&2 "Fetching and transforming env file from S3. ${details}"
     aws \
