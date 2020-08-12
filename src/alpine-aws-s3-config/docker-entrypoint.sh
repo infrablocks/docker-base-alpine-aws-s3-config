@@ -47,22 +47,29 @@ AWS_METADATA_SERVICE_URL=\
 
 # Define more helper functions using in script
 fetch_value_from_metadata_service () {
+    local metadata_service_url="${AWS_METADATA_SERVICE_URL}"
     local key="$1"
-    echo >&2 "Looking up instance metadata. [key: $key]"
-    curl -s "${AWS_METADATA_SERVICE_URL}/latest/meta-data/$key"
+
+    local key_kv="key: $key"
+    local metadata_service_url_kv="metadata-service-url: $metadata_service_url"
+
+    echo >&2 "Looking up instance metadata. [$metadata_service_url_kv, $key_kv]"
+    curl -s "${metadata_service_url}/latest/meta-data/$key"
 }
 
 build_env_file_from_s3 () {
+    local endpoint_url="${AWS_S3_ENDPOINT_URL}"
     local region="$1"
     local object_path="$2"
 
+    local endpoint_url_kv="endpoint-url: ${endpoint_url}"
     local region_kv="region: ${region}"
     local object_path_kv="object-path: ${object_path}"
-    local details="[${region_kv}, ${object_path_kv}]"
+    local details="[${endpoint_url_kv}, ${region_kv}, ${object_path_kv}}]"
 
     echo >&2 "Fetching and transforming env file from S3. ${details}"
     aws \
-        --endpoint-url "${AWS_S3_ENDPOINT_URL}" \
+        --endpoint-url "${endpoint_url}" \
         s3 cp \
         --sse AES256 \
         --region "${region}" \
@@ -71,19 +78,22 @@ build_env_file_from_s3 () {
 
 # Define helper functions used in callbacks
 fetch_file_from_s3 () {
+    local endpoint_url="${AWS_S3_ENDPOINT_URL}"
     local region="$1"
     local object_path="$2"
     local local_path="$3"
 
+    local endpoint_url_kv="endpoint-url: ${endpoint_url}"
     local region_kv="region: ${region}"
     local object_path_kv="object-path: ${object_path}"
     local local_path_kv="local-path: ${local_path}"
-    local details="[${region_kv}, ${object_path_kv}, ${local_path_kv}]"
+    local paths_kvs="${object_path_kv}, ${local_path_kv}"
+    local details="[${endpoint_url_kv}, ${region_kv}, ${paths_kvs}]"
 
     echo >&2 "Fetching file from S3. ${details}"
     mkdir -p "$(dirname "$local_path")"
     aws \
-        --endpoint-url "${AWS_S3_ENDPOINT_URL}" \
+        --endpoint-url "${endpoint_url}" \
         s3 cp \
         --sse AES256 \
         --region "${region}" \
