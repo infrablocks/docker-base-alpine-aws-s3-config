@@ -1,4 +1,4 @@
-FROM infrablocks/alpine-aws:0.11.0
+FROM infrablocks/alpine-aws:0.12.0
 
 RUN apk -v --no-cache add \
       bash \
