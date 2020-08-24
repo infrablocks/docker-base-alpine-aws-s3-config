@@ -16,6 +16,7 @@ source_callback () {
     local name="$1"
     if [ -n "${!name}" ]; then
         echo >&2 "Sourcing callback. [path: ${!name}]"
+        # shellcheck disable=SC1090
         source "${!name}"
     fi
 }

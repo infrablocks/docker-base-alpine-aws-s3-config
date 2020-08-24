@@ -1,10 +1,12 @@
-FROM infrablocks/alpine-aws:0.12.0
+FROM infrablocks/alpine-aws:0.13.0
 
-RUN apk -v --no-cache add \
-      bash \
-      curl \
-      dumb-init \
-      sed
+RUN apk \
+      --verbose \
+      --no-cache \
+      add \
+          bash \
+          curl \
+          dumb-init
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
