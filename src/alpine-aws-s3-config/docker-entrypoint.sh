@@ -69,12 +69,15 @@ build_env_file_from_s3 () {
     local details="[${endpoint_url_kv}, ${region_kv}, ${object_path_kv}]"
 
     echo >&2 "Fetching and transforming env file from S3. ${details}"
-    aws \
+    set -o allexport
+    # shellcheck disable=SC1090
+    source <(aws \
         --endpoint-url "${endpoint_url}" \
         s3 cp \
         --sse AES256 \
         --region "${region}" \
-        "${object_path}" - | sed 's/^/export /'
+        "${object_path}" -)
+    set +o allexport
 }
 
 # Define helper functions used in callbacks
