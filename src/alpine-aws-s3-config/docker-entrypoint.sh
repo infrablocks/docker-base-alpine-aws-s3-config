@@ -137,4 +137,6 @@ source_callback "EXPORT_ADDITIONAL_ENVIRONMENT_SCRIPT_PATH"
 unset -f add_env_var
 
 # Delegate to startup script
+export -f fetch_file_from_s3 add_env_var
 exec_callback "STARTUP_SCRIPT_PATH" "$@"
+unset -f fetch_file_from_s3 add_env_var
