@@ -58,7 +58,7 @@ fetch_value_from_metadata_service () {
     curl -s "${metadata_service_url}/latest/meta-data/$key"
 }
 
-build_env_file_from_s3 () {
+fetch_env_file_contents_from_s3 () {
     local endpoint_url="${AWS_S3_ENDPOINT_URL}"
     local region="$1"
     local object_path="$2"
@@ -69,15 +69,12 @@ build_env_file_from_s3 () {
     local details="[${endpoint_url_kv}, ${region_kv}, ${object_path_kv}]"
 
     echo >&2 "Fetching and transforming env file from S3. ${details}"
-    set -o allexport
-    # shellcheck disable=SC1090
-    source <(aws \
+    aws \
         --endpoint-url "${endpoint_url}" \
         s3 cp \
         --sse AES256 \
         --region "${region}" \
-        "${object_path}" -)
-    set +o allexport
+        "${object_path}" -
 }
 
 # Define helper functions used in callbacks
@@ -123,10 +120,11 @@ export SELF_IP
 export SELF_HOSTNAME
 
 # Fetch and source env file from S3
-eval \
-    "$(build_env_file_from_s3 \
+set -o allexport
+eval "$(fetch_env_file_contents_from_s3 \
         "${AWS_S3_BUCKET_REGION}" \
         "${AWS_S3_ENV_FILE_OBJECT_PATH}")"
+set +o allexport
 
 # Fetch secrets files
 export -f fetch_file_from_s3
