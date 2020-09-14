@@ -129,14 +129,14 @@ set +o allexport
 # Fetch secrets files
 export -f fetch_file_from_s3
 source_callback "FETCH_SECRETS_FILES_SCRIPT_PATH"
-unset -f fetch_file_from_s3
+export -n -f fetch_file_from_s3
 
 # Export additional environment
 export -f add_env_var
 source_callback "EXPORT_ADDITIONAL_ENVIRONMENT_SCRIPT_PATH"
-unset -f add_env_var
+export -n -f add_env_var
 
 # Delegate to startup script
 export -f fetch_file_from_s3 add_env_var
 exec_callback "STARTUP_SCRIPT_PATH" "$@"
-unset -f fetch_file_from_s3 add_env_var
+export -n -f fetch_file_from_s3 add_env_var
