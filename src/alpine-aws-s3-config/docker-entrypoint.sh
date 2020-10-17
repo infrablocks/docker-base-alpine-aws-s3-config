@@ -119,10 +119,12 @@ add_env_var () {
 SELF_ID=$(fetch_value_from_metadata_service "instance-id")
 SELF_IP=$(fetch_value_from_metadata_service "local-ipv4")
 SELF_HOSTNAME=$(fetch_value_from_metadata_service "local-hostname")
+SELF_AVAILABILITY_ZONE=$(fetch_value_from_metadata_service "placement/availability-zone")
 
 export SELF_ID
 export SELF_IP
 export SELF_HOSTNAME
+export SELF_AVAILABILITY_ZONE
 
 # Fetch and source env file from S3
 set -o allexport
