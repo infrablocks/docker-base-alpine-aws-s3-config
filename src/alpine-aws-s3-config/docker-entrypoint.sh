@@ -46,6 +46,11 @@ AWS_S3_ENDPOINT_URL="${AWS_S3_ENDPOINT_URL:-${AWS_DEFAULT_S3_ENDPOINT_URL}}"
 AWS_METADATA_SERVICE_URL=\
 "${AWS_METADATA_SERVICE_URL:-${AWS_DEFAULT_METADATA_SERVICE_URL}}"
 
+export AWS_S3_BUCKET_REGION
+export AWS_S3_ENV_FILE_OBJECT_PATH
+export AWS_S3_ENDPOINT_URL
+export AWS_METADATA_SERVICE_URL
+
 # Define more helper functions using in script
 fetch_value_from_metadata_service () {
     local metadata_service_url="${AWS_METADATA_SERVICE_URL}"
