@@ -1,4 +1,4 @@
-FROM infrablocks/alpine-aws:0.13.0
+FROM infrablocks/alpine-aws:0.15.0
 
 RUN apk \
       --verbose \
