@@ -7,7 +7,7 @@ describe 'commands' do
     set :backend, :docker
     set :docker_image, 'alpine-aws-s3-config:latest'
     set :docker_container_create_options, {
-      'Entrypoint' => '/bin/sh'
+      'Entrypoint' => ['/bin/sh']
     }
   end
 
